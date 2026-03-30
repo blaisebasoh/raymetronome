@@ -4,10 +4,20 @@
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
 
-bool showMessageBox = false;
+double nextBeatTime = GetTime();
+float beatsPerMinute = 60.0f;
+float bpm = beatsPerMinute;
+
 int main() {
   InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "RayMetronome");
+  InitAudioDevice();
   SetTargetFPS(60);
+
+  // TODO: Get a better tick sound
+  Sound tickSound = LoadSound("res/sound/tick_sound.ogg");
+
+  // set window ontop every window
+  SetWindowState(FLAG_WINDOW_TOPMOST);
 
   // attempting to center the WindowShouldClose
   SetWindowPosition((GetScreenWidth() / 2 * 3.5), GetScreenHeight() / 2);
@@ -15,6 +25,13 @@ int main() {
   while (!WindowShouldClose()) {
     // physics stuffs?
     {
+
+      // calculate timing and play beat
+      double currentTime = GetTime(); // gets time in which program started
+      if (currentTime >= nextBeatTime) {
+        PlaySound(tickSound);
+        nextBeatTime += 60.0 / bpm;
+      }
     }
 
     // rendering stuffs?
@@ -24,24 +41,23 @@ int main() {
 
       // raygui stuffs?
       {
-        if (GuiButton((Rectangle){24, 24, 120, 30}, "#191#Show Message"))
-          showMessageBox = true;
-        if (showMessageBox) {
-          int result =
-              GuiMessageBox((Rectangle){85, 70, 250, 100}, "#191#Message Box",
-                            "Hi! This is a message!", "Nice;Cool");
-          if (result >= 0)
-            showMessageBox = false;
-        }
+        // draw bpm value
+        DrawText(TextFormat("BPM: %.0f", bpm), (SCREEN_WIDTH / 2) - 50,
+                 (SCREEN_HEIGHT / 2) - 50, 30, BLACK);
+
+        //  Draw bpm slider
+        GuiSlider(
+            (Rectangle){(SCREEN_WIDTH / 2) - 50, SCREEN_HEIGHT / 2, 100, 20},
+            "0", "200", &bpm, 0.0f, 200.0f);
       }
 
       // actual drawing stuffs?
       {
-        DrawText("RayMetronome", (SCREEN_WIDTH / 2 - 100), SCREEN_HEIGHT / 2,
-                 30, BLUE);
       }
       EndDrawing();
     }
   }
+  CloseAudioDevice();
+  CloseWindow();
   return 0;
 }
